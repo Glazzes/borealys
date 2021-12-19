@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"os/exec"
@@ -10,6 +11,12 @@ import (
 type SupportedLanguage struct {
 	Name string
 	SupportedVersions []string
+}
+
+type ExecutableCode struct {
+	Language string `json:"language" binding:"required"`
+	Version string `json:"version" binding:"required"`
+	Code []string `json:"code" binding:"required"`
 }
 
 func GetSupportedLanguages(context *gin.Context){
@@ -46,4 +53,15 @@ func HandleInSystemCode(context *gin.Context){
 	context.JSON(http.StatusOK, gin.H{
 		"stdout": strings.Split(string(stdout), "\n"),
 	})
+}
+
+func HandleCodeUpload(context *gin.Context){
+	userCode := ExecutableCode{}
+	err := context.BindJSON(&userCode)
+
+	if err != nil {
+		context.AbortWithError(http.StatusBadRequest, err)
+	}
+
+	fmt.Println(userCode)
 }

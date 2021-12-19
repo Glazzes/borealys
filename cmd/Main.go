@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./handler"
+	"../handler"
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,8 +11,10 @@ func main() {
 	router.GET("/docker", handler.HandleInDockerCode)
 	router.GET("/system", handler.HandleInSystemCode)
 	router.GET("/langs", handler.GetSupportedLanguages)
+	router.POST("/run", handler.HandleCodeUpload)
 
 	err := router.Run(":5000")
+
 	if err != nil{
 		panic(err)
 	}
