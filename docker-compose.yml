@@ -1,0 +1,19 @@
+version: 3.7
+
+services:
+  borelays:
+    image: ""
+    depends_on:
+      - cache
+    networks:
+      - borealys-net
+
+  cache:
+    image: redis:6.2.4-alpine
+    container_name: borealys_redis_cache
+    networks:
+      - borealys-net
+
+networks:
+  borealys-net:
+    driver: bridge

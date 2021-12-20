@@ -7,11 +7,10 @@ import (
 
 func main() {
 	router := gin.Default()
+	router.Use(gin.Logger())
 
-	router.GET("/docker", handler.HandleInDockerCode)
-	router.GET("/system", handler.HandleInSystemCode)
-	router.GET("/langs", handler.GetSupportedLanguages)
-	router.POST("/run", handler.HandleCodeUpload)
+	router.GET("/api/languages")
+	router.POST("/execute", handler.HandleCodeUpload)
 
 	err := router.Run(":5000")
 

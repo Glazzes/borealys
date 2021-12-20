@@ -1,0 +1,3 @@
+FROM ubuntu:20.04
+WORKDIR . /borealys
+EXPOSE 5000
