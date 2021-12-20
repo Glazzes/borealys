@@ -11,6 +11,9 @@ import (
 type SupportedLanguage struct {
 	Name string
 	SupportedVersions []string
+	Extension string
+	RequiresCompilation bool
+	IsInterpreted bool
 }
 
 type ExecutableCode struct {

@@ -7,7 +7,6 @@ import (
 
 func main() {
 	router := gin.Default()
-	router.Use(gin.Logger())
 
 	router.GET("/api/languages")
 	router.POST("/execute", handler.HandleCodeUpload)
