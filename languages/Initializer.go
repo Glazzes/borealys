@@ -18,7 +18,7 @@ const (
 
 var (
 	infoLogger *log.Logger
-	regex = regexp.MustCompile(".*/(?P<binary>\\w+)/(?P<version>\\d{1,2}(\\.\\d{1,2})?(\\.\\d{1,2})?)/\\w+\\.sh$")
+	regex = regexp.MustCompile("(?P<binary>\\w+)/(?P<version>\\d{1,2}(\\.\\d{1,2})?(\\.\\d{1,2})?)/?\\w+\\.sh/?$")
 )
 
 func init()  {
@@ -45,18 +45,26 @@ func CreateCodeExecutors(){
 func SetUpBinaries(){
 	infoLogger.Print("Setting up binaries")
 	err := filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
-		if strings.HasSuffix(path, ".sh") && !strings.Contains(path, "scripts"){
+		if strings.HasSuffix(path, "setup.sh"){
 			info, err := GetBinaryInfoFromPath(path)
 			if err == nil {
-				infoLogger.Printf("Downloading binary %s %s", info[binaryName], info[binaryVersion])
+				infoLogger.Printf("Downloading %s %s binaries", info[binaryName], info[binaryVersion])
 			}
 
-			err = exec.Command("bash", path).Run()
-			if err != nil{
-				return err
+			DownloadBinary(path, info[binaryName], info[binaryVersion])
+		}
+		return nil
+	})
+
+	err = filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
+		if strings.HasSuffix(path, "environment.sh") {
+			info, err := GetBinaryInfoFromPath(path)
+			if err != nil {
+				return fmt.Errorf("could not expor environment variable")
 			}
 
-			infoLogger.Printf("Binary %s %s downloaded and linked successfully", info[binaryName], info[binaryVersion])
+			ExportEnvironmentVariables(path, info[binaryName], info[binaryVersion])
+			infoLogger.Printf("Exported variable for %s %s", info[binaryName], info[binaryVersion])
 		}
 
 		return nil
@@ -64,8 +72,7 @@ func SetUpBinaries(){
 
 	checkNilErrorFatal(err)
 
-	infoLogger.Println("All binaries downloaded successfully!")
-	infoLogger.Println("You're a ready to run some code :D !!!")
+	infoLogger.Println("Binaries and environment have been downloaded and exported successfully")
 }
 
 func GetBinaryInfoFromPath(filePath string) (map[string]string, error) {
@@ -82,6 +89,26 @@ func GetBinaryInfoFromPath(filePath string) (map[string]string, error) {
 	}
 
 	return nil, fmt.Errorf("no matches were found on the given path")
+}
+
+func DownloadBinary(path, binary, version string){
+	err := exec.Command("bash", path).Run()
+	if err != nil{
+		log.Fatalf("could not download binary %s %s", binary, version)
+	}
+
+	message := fmt.Sprintf("%s %s binaries downloaded successfully!!", binary, version)
+	infoLogger.Println(strings.Title(message))
+}
+
+func ExportEnvironmentVariables(path, binary, version string){
+	command := fmt.Sprintf("source %s", path)
+	err := exec.Command("bash", "-c", command).Run()
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	infoLogger.Printf("Set up environment variable for %s %s", binary, version)
 }
 
 func checkNilErrorFatal(err error){

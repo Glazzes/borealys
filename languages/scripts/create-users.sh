@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# creates runner users and limits available resources per user
 for i in {1..100}
 do
   currentUser="user$i"

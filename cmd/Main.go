@@ -8,7 +8,7 @@ import (
 func main() {
 	router := gin.Default()
 
-	router.GET("/api/languages")
+	router.GET("/api/languages", handler.GetSupportedLanguages)
 	router.POST("/execute", handler.HandleCodeUpload)
 
 	err := router.Run(":5000")
