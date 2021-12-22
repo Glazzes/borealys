@@ -1,9 +1,13 @@
 FROM ubuntu:20.04
-RUN apt update \
-    && apt install apt-utils -y \
-    && apt install curl -y
+SHELL ["/bin/bash", "-c"]
 
-WORKDIR /binaries
+RUN apt-get update --fix-missing \
+    && apt-get install -y curl xz-utils
+
+RUN mkdir /binaries
+
 WORKDIR /borealys
 COPY . /borealys
-ENTRYPOINT ["./Initialzer", "&&", "/bin/sh", "-c"]
+
+RUN ./Initializer
+ENTRYPOINT ["/bin/bash", "-c"]
