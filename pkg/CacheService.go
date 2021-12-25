@@ -10,13 +10,13 @@ var (
 )
 
 type CacheService interface {
-	SetKey(key string, output string)
+	SetKey(key string, output []string)
 	GetKey(key string) []string
 }
 
 type SimpleCacheService struct {}
 
-func (c *SimpleCodeRunnerService) SetKey(key, output string)  {
+func (c *SimpleCodeRunnerService) SetKey(key string, output []string)  {
 	config.RedisClient.Set(key, output, duration)
 }
 

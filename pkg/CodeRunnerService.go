@@ -3,16 +3,16 @@ package pkg
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"net/http"
 	"os/exec"
 	"strings"
 )
 
-var currentRunner = 1
+var user = 1
 
 type CodeRunnerService interface {
 	RunCode() []string
-	GetSupportedLanguages() []SupportedLanguage
 }
 
 type SimpleCodeRunnerService struct {}
@@ -37,17 +37,6 @@ type ExecutableCode struct {
 	Code []string `json:"code" binding:"required"`
 }
 
-func (c *SimpleCodeRunnerService) GetSupportedLanguages(context *gin.Context){
-	supportedLanguages := []SupportedLanguage{
-		{Name: "Java", SupportedVersions: []string{"17"}},
-		{Name: "node", SupportedVersions: []string{"16.13.0", "17.3.0"}},
-		{Name: "python", SupportedVersions: []string{"3.10.1"}},
-		{Name: "go", SupportedVersions: []string{"1.17.5"}},
-	}
-
-	context.JSON(http.StatusOK, supportedLanguages)
-}
-
 func (c *SimpleCodeRunnerService) RunCode(context *gin.Context) {
 	body := ExecutableCode{}
 	err := context.BindJSON(&body)
@@ -57,14 +46,35 @@ func (c *SimpleCodeRunnerService) RunCode(context *gin.Context) {
 		return
 	}
 
-	binary := fmt.Sprintf("/binaries/%s/%s/bin/%s", body.Language, body.Version, body.Language)
-	output, err := exec.Command(binary, "").Output()
+	currentUser := fmt.Sprintf("user%d", user)
+	tempFolderName := uuid.New().String()
+	tempFilename := uuid.New().String()
 
-	if err != nil {
-		context.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
+	createTempFolder(currentUser, tempFolderName)
+}
 
-	prettifiedOutput := strings.Split(string(output), "\n")
-	context.JSON(http.StatusOK, prettifiedOutput)
+func createTempFolder(currentUser, tempFolderName string) error {
+	command := fmt.Sprintf("'mkdir /tmp/%s/%s'", currentUser, tempFolderName)
+	return exec.Command("runuser", "-l", currentUser, "-c", command).Run()
+}
+
+func createTempFile(currentUser, tempFilename, tempFolderName, extension string) error {
+	filename := fmt.Sprintf("/tmp/%s/%s/%s.%s", currentUser, tempFolderName, tempFilename, extension)
+	command := fmt.Sprintf("'touch %s'", filename)
+	return exec.Command("runuser", "-l", currentUser, "-c", command).Run()
+}
+
+func executeFile(currentUser, binary, file string) []string {
+	command := fmt.Sprintf("'%s %s'", binary, file)
+	output, _ := exec.Command("runuser", "-l", currentUser, "-c", command).Output()
+	return strings.Split(string(output), "\n")
+}
+
+func cleanUpFiles(currentUser string) error {
+	folderName := fmt.Sprint("/tmp/%s", currentUser)
+	return exec.Command("rm", "-rf", folderName).Run()
+}
+
+func cleanUpProcesses(currentUser string) error {
+	return exec.Command("pkill", "-u", currentUser).Run()
 }
