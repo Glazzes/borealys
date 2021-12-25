@@ -5,11 +5,20 @@ import (
 	pkg2 "github.com/glazzes/borealys/pkg"
 )
 
+var (
+	languageService = &pkg2.SimpleLanguageService{}
+	codeRunnerService = &pkg2.SimpleCodeRunnerService{}
+)
+
+func init(){
+	languageService.SaveAll()
+}
+
 func main() {
 	router := gin.Default()
 
-	router.GET("/api/languages", pkg2.SimpleLanguageService{}.GetAll)
-	router.POST("/api/run", pkg2.SimpleCodeRunnerService{}.RunCode)
+	router.GET("/api/languages", languageService.GetAll)
+	router.POST("/api/run", codeRunnerService.RunCode)
 
 	err := router.Run(":5000")
 

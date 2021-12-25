@@ -1,5 +1,7 @@
 package main
 
+/*
+
 import (
 	"fmt"
 	"io/fs"
@@ -105,3 +107,4 @@ func checkNilErrorFatal(err error){
 		log.Fatal(err)
 	}
 }
+ */

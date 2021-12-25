@@ -9,7 +9,10 @@ import (
 	"strings"
 )
 
-var user = 1
+var (
+	user = 1
+	cacheService = &SimpleCacheService{}
+)
 
 type CodeRunnerService interface {
 	RunCode() []string
@@ -18,17 +21,15 @@ type CodeRunnerService interface {
 type SimpleCodeRunnerService struct {}
 
 type SupportedLanguage struct {
-	Name string
-	SupportedVersions []string
-	Extension string
-	BinaryDiffers bool
-	BinaryHints []string
+	Name string `json:"name" binding:"required"`
+	Version string `json:"version" binding:"required"`
+	Extension string `json:"extension" binding:"required"`
+	Binary string `json:"binary" binding:"required"`
 }
 
 type SupportedLanguageDTO struct {
 	Name string
-	Version string
-	SupportedVersions []string
+	Versions []string
 }
 
 type ExecutableCode struct {
@@ -38,17 +39,15 @@ type ExecutableCode struct {
 }
 
 func (c *SimpleCodeRunnerService) RunCode(context *gin.Context) {
-	body := ExecutableCode{}
-	err := context.BindJSON(&body)
+	body:= ExecutableCode{}
 
-	if err != nil {
+	if err := context.BindJSON(&body); err != nil {
 		context.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	currentUser := fmt.Sprintf("user%d", user)
 	tempFolderName := uuid.New().String()
-	tempFilename := uuid.New().String()
 
 	createTempFolder(currentUser, tempFolderName)
 }
@@ -58,8 +57,8 @@ func createTempFolder(currentUser, tempFolderName string) error {
 	return exec.Command("runuser", "-l", currentUser, "-c", command).Run()
 }
 
-func createTempFile(currentUser, tempFilename, tempFolderName, extension string) error {
-	filename := fmt.Sprintf("/tmp/%s/%s/%s.%s", currentUser, tempFolderName, tempFilename, extension)
+func createTempFile(currentUser, tempFolderName, extension string) error {
+	filename := fmt.Sprintf("/tmp/%s/%s/code%s", currentUser, tempFolderName, extension)
 	command := fmt.Sprintf("'touch %s'", filename)
 	return exec.Command("runuser", "-l", currentUser, "-c", command).Run()
 }

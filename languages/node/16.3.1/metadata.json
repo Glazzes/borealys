@@ -1,7 +1,6 @@
 {
-  "name": "node",
+  "name": "Node",
   "extension": ".js",
-  "binary": "/binaries/node/16.3.1/bin/node",
-  "differs": false,
-  "hints": null
+  "version": "16.3.1",
+  "binary": "/binaries/node/16.3.1/bin/node"
 }
