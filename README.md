@@ -16,9 +16,9 @@ My knowledge of the Linux operating system is still quite limited out of
 the average user needs, so this project brings me many of the
 following challenges:
 - Create new system users
-- Understanding of group and permissions
+- Get a better understanding of group and permissions
 - Limit user resources, open processes, open files and more
-- Learn the basics of Bash and Make
+- Learn the basics of Bash scripting
 
 ### Behaviour
 - Users will send their code along with the selected language name and version,

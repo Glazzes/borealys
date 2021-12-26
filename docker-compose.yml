@@ -1,20 +1,12 @@
-version: 3.7
+version: "3.7"
 
 services:
-  editor:
-    image: glazzes/boreayls-editor
-    container_name: boreayls-editor
-    depends_on:
-      - borealys
-    ports:
-    - 5000:5000
-
   borealys:
-    image: glazzes/borealys:latest
+    build: "."
     container_name: borealys
     depends_on:
       - cache
 
   cache:
     image: redis:6.2.4-alpine
-    container_name: redis-cache
+    container_name: cache

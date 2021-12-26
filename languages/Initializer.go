@@ -1,6 +1,4 @@
-package main
-
-/*
+package languages
 
 import (
 	"fmt"
@@ -40,11 +38,6 @@ func init()  {
 	initializer = New()
 }
 
-func main(){
-	initializer.CreateExecutorUsers()
-	initializer.SetUpBinaries()
-}
-
 func (context *SimpleInitializerService) CreateExecutorUsers(){
 	infoLogger.Println("Creating executor users")
 	_, err := exec.Command("bash", "./scripts/create-users.sh").Output()
@@ -60,7 +53,7 @@ func (context *SimpleInitializerService) CreateExecutorUsers(){
 func (context *SimpleInitializerService)SetUpBinaries(){
 	infoLogger.Print("Setting up binaries")
 	err := filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
-		if strings.HasSuffix(path, "setup.sh"){
+		if strings.HasSuffix(path, "/16.3.1/setup.sh"){
 			info, err := GetBinaryInfoFromPath(path)
 			if err == nil {
 				infoLogger.Printf("Downloading %s %s binaries", info[binaryName], info[binaryVersion])
@@ -107,4 +100,3 @@ func checkNilErrorFatal(err error){
 		log.Fatal(err)
 	}
 }
- */

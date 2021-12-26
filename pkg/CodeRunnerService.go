@@ -1,10 +1,13 @@
 package pkg
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/glazzes/borealys/pkg/config"
 	"github.com/google/uuid"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -12,6 +15,7 @@ import (
 var (
 	user = 1
 	cacheService = &SimpleCacheService{}
+	languageService = &SimpleLanguageService{}
 )
 
 type CodeRunnerService interface {
@@ -28,8 +32,8 @@ type SupportedLanguage struct {
 }
 
 type SupportedLanguageDTO struct {
-	Name string
-	Versions []string
+	Name string `json:"name" binding:"required"`
+	Versions []string `json:"versions" binding:"required"`
 }
 
 type ExecutableCode struct {
@@ -46,10 +50,24 @@ func (c *SimpleCodeRunnerService) RunCode(context *gin.Context) {
 		return
 	}
 
+	find, err := config.RedisClient.Get(body.Language + "-" + body.Version).Result()
+	checkNilError(err)
+
+	language := SupportedLanguage{}
+	checkNilError(json.Unmarshal([]byte(find), &lang))
+
+
 	currentUser := fmt.Sprintf("user%d", user)
 	tempFolderName := uuid.New().String()
 
-	createTempFolder(currentUser, tempFolderName)
+	checkNilError(createTempFolder(currentUser, tempFolderName))
+	filename, err := createTempFile(currentUser, tempFolderName, language.Extension)
+	checkNilError(err)
+
+	writeCodeToTempFile(filename, body.Code)
+	executeFile(currentUser, language.Binary, filename)
+	checkNilError(cleanUpFiles(currentUser, tempFolderName))
+	checkNilError(cleanUpProcesses(currentUser))
 }
 
 func createTempFolder(currentUser, tempFolderName string) error {
@@ -57,10 +75,20 @@ func createTempFolder(currentUser, tempFolderName string) error {
 	return exec.Command("runuser", "-l", currentUser, "-c", command).Run()
 }
 
-func createTempFile(currentUser, tempFolderName, extension string) error {
+func createTempFile(currentUser, tempFolderName, extension string) (string ,error) {
 	filename := fmt.Sprintf("/tmp/%s/%s/code%s", currentUser, tempFolderName, extension)
 	command := fmt.Sprintf("'touch %s'", filename)
-	return exec.Command("runuser", "-l", currentUser, "-c", command).Run()
+	return filename, exec.Command("runuser", "-l", currentUser, "-c", command).Run()
+}
+
+func writeCodeToTempFile(filename string, code []string){
+	file, err := os.OpenFile(filename, os.O_APPEND, 0644)
+	checkNilError(err)
+	defer file.Close()
+
+	for _, line := range code {
+		file.WriteString(line + "\n")
+	}
 }
 
 func executeFile(currentUser, binary, file string) []string {
@@ -69,8 +97,8 @@ func executeFile(currentUser, binary, file string) []string {
 	return strings.Split(string(output), "\n")
 }
 
-func cleanUpFiles(currentUser string) error {
-	folderName := fmt.Sprint("/tmp/%s", currentUser)
+func cleanUpFiles(currentUser, tempFolder string) error {
+	folderName := fmt.Sprintf("/tmp/%s/%s", currentUser, tempFolder)
 	return exec.Command("rm", "-rf", folderName).Run()
 }
 
