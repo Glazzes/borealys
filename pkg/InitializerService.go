@@ -1,4 +1,4 @@
-package languages
+package pkg
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ type InitializerService interface {
 
 type SimpleInitializerService struct {}
 
-func New() *SimpleInitializerService{
+func New() *SimpleInitializerService {
 	return &SimpleInitializerService{}
 }
 
@@ -40,11 +40,8 @@ func init()  {
 
 func (context *SimpleInitializerService) CreateExecutorUsers(){
 	infoLogger.Println("Creating executor users")
-	_, err := exec.Command("bash", "./scripts/create-users.sh").Output()
-	if err != nil{
-		if os.IsNotExist(err){
-			log.Fatal(err)
-		}
+	if err := exec.Command("/bin/bash", "/borealys/languages/scripts/create-users.sh").Run(); err != nil {
+		log.Fatal(err)
 	}
 
 	infoLogger.Println("Created executor users successfully")
