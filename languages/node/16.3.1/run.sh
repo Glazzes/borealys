@@ -1,0 +1,1 @@
+timeout -s KILL 3 /binaries/node/16.3.1/bin/node $1

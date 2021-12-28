@@ -17,17 +17,30 @@ var (
 	lang = "lang"
 )
 
+type SupportedLanguageDTO struct {
+	Name string `json:"name" binding:"required"`
+	Timeout int `json:"timeout" binding:"required"`
+	Versions []string `json:"versions" binding:"required"`
+}
+
+type SupportedLanguage struct {
+	Name string `json:"name" binding:"required"`
+	Version string `json:"version" binding:"required"`
+	Extension string `json:"extension" binding:"required"`
+	Timeout int `json:"timeout" binding:"required"`
+}
+
 type LanguageService interface {
 	SaveAll()
-	SaveRunnableLanguages()
 	GetAll(c *gin.Context)
-	GetByKey(key string)
+	SaveRunnableLanguages()
+	GetRunnableLanguageByKey(key string) SupportedLanguage
 }
 
 type SimpleLanguageService struct {}
 
-func (c *SimpleLanguageService) SaveAll() {
-	languages := make(map[string]SupportedLanguageDTO, 3)
+func (context *SimpleLanguageService) SaveAll() {
+	languages := make(map[string]SupportedLanguageDTO, 0)
 
 	err := filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
 		if strings.HasSuffix(path, "metadata.json") {
@@ -47,6 +60,7 @@ func (c *SimpleLanguageService) SaveAll() {
 			}else {
 				languages[language.Name] = SupportedLanguageDTO{
 					Name: language.Name,
+					Timeout: language.Timeout,
 					Versions: []string{language.Version},
 				}
 			}
@@ -74,7 +88,7 @@ func saveToRedis(languages map[string]SupportedLanguageDTO){
 	}
 }
 
-func (c *SimpleLanguageService) GetAll(context *gin.Context) {
+func (context *SimpleLanguageService) GetAll(ginC *gin.Context) {
 	result, err := config.RedisClient.Keys(lang + "-*").Result()
 	checkNilError(err)
 
@@ -92,27 +106,10 @@ func (c *SimpleLanguageService) GetAll(context *gin.Context) {
 		store = append(store, holder)
 	}
 
-	context.JSON(http.StatusOK, store)
+	ginC.JSON(http.StatusOK, store)
 }
 
-func (c *SimpleLanguageService) GetByName(key string) SupportedLanguageDTO {
-	savedLang := config.RedisClient.Get(key)
-	bytes, err := savedLang.Bytes()
-
-	checkNilError(err)
-
-	supportedLanguage := SupportedLanguage{}
-	if err = json.Unmarshal(bytes, &supportedLanguage); err != nil {
-		log.Fatal(err)
-	}
-
-	return SupportedLanguageDTO{
-		Name: supportedLanguage.Name,
-		Versions:[]string{},
-	}
-}
-
-func (c *SimpleLanguageService) SaveRunnableLanguages() {
+func (context *SimpleLanguageService) SaveRunnableLanguages() {
 	err := filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
 		if strings.HasSuffix(path, "metadata.json") {
 			fileBytes, err := ioutil.ReadFile(path)
@@ -132,6 +129,20 @@ func (c *SimpleLanguageService) SaveRunnableLanguages() {
 	})
 
 	checkNilError(err)
+}
+
+func (context *SimpleLanguageService) GetRunnableLanguageByKey(key string) SupportedLanguage {
+	find, err := config.RedisClient.Get(key).Result()
+	if err != nil {
+		log.Fatal("Could not find language with key " + key)
+	}
+
+	language := SupportedLanguage{}
+	if err = json.Unmarshal([]byte(find), &language); err != nil {
+		log.Fatal(err)
+	}
+
+	return language
 }
 
 func checkNilError(err error){

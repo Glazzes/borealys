@@ -2,5 +2,5 @@
   "name": "Python",
   "extension": ".py",
   "version": "3.10.1",
-  "binary": "python3"
+  "timeout": 3
 }

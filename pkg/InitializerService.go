@@ -14,6 +14,7 @@ import (
 type InitializerService interface {
 	CreateExecutorUsers()
 	SetUpBinaries()
+	CreateRunnersGroup()
 }
 
 type SimpleInitializerService struct {}
@@ -36,6 +37,15 @@ var (
 func init()  {
 	infoLogger = log.New(os.Stdout, "Info: ", log.LstdFlags | log.Lshortfile)
 	initializer = New()
+}
+
+func (context *SimpleInitializerService) CreateRunnersGroup() {
+	infoLogger.Println("Creating runners group")
+	if err := exec.Command("/bin/bash", "/borealys/languages/scripts/create-group.sh").Run(); err != nil {
+		log.Fatal(err)
+	}
+
+	infoLogger.Println("Created runners group successfully")
 }
 
 func (context *SimpleInitializerService) CreateExecutorUsers(){

@@ -2,21 +2,21 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/glazzes/borealys/languages"
 	pkg2 "github.com/glazzes/borealys/pkg"
 )
 
 var (
-	initializerService = &languages.SimpleInitializerService{}
+	initializerService = &pkg2.SimpleInitializerService{}
 	languageService = &pkg2.SimpleLanguageService{}
 	codeRunnerService = &pkg2.SimpleCodeRunnerService{}
 )
 
 func init(){
-	languageService.SaveAll()
-	languageService.SaveRunnableLanguages()
+	initializerService.CreateRunnersGroup()
 	initializerService.CreateExecutorUsers()
 	initializerService.SetUpBinaries()
+	languageService.SaveAll()
+	languageService.SaveRunnableLanguages()
 }
 
 func main() {

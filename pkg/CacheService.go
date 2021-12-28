@@ -9,7 +9,6 @@ import (
 
 var (
 	duration = time.Second * 240
-	infoLogger = log.Logger{}
 )
 
 type CacheService interface {
@@ -29,7 +28,7 @@ func (c *SimpleCacheService) GetOutputByKey(key string) []string {
 	result,err := config.RedisClient.Get(key).Result()
 	checkNilErr(err)
 
-	deserialized := []string{}
+	deserialized := make([]string, 0)
 	if err = json.Unmarshal([]byte(result), &deserialized); err != nil{
 		log.Fatal(err)
 	}

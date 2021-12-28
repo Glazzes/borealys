@@ -1,6 +1,6 @@
 {
   "name": "Node",
-  "extension": ".js",
   "version": "16.3.1",
-  "binary": "/binaries/node/16.3.1/bin/node"
+  "extension": ".js",
+  "timeout": 3
 }

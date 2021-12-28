@@ -1,6 +1,6 @@
 {
   "name": "Java",
-  "extension": ".java",
   "version": "17",
-  "binary": "/binaries/java/17/bin/java"
+  "extension": ".java",
+  "timeout": 4
 }
