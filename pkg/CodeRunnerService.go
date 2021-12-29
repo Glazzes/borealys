@@ -1,12 +1,18 @@
 package pkg
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"io"
 	"net/http"
 	"os/exec"
 	"strings"
+)
+
+const (
+	maxOutputByteSliceLength = 65332 // Max output size 64kb
 )
 
 var (
@@ -29,6 +35,7 @@ type ExecutableCode struct {
 }
 
 type Response struct {
+	Status int
 	Trimmed bool
 	Output []string
 }
@@ -63,21 +70,48 @@ func (c *SimpleCodeRunnerService) RunCode(context *gin.Context) {
 func executeFile(currentUser, file string, lang SupportedLanguage) Response {
 	script := fmt.Sprintf("/borealys/languages/%s/%s/run.sh", strings.ToLower(lang.Name), lang.Version)
 
-	output, _ := exec.Command(
+	cmd := exec.Command(
 		"runuser",
 		"-u",
 		currentUser,
 		"--",
 		"/bin/bash",
 		script,
-		file).Output()
+		file)
 
-	strOutput := strings.Split(string(output[:48000]), "\n")
+	stdoutBuf := bytes.Buffer{}
+	stderrBuf := bytes.Buffer{}
+
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
+
+	cmd.Run()
+	var currentOutput []byte
+	var status int
+	if len(stdoutBuf.Bytes()) > 0 {
+		currentOutput = stdoutBuf.Bytes()
+		status = http.StatusOK
+	}else{
+		currentOutput = stderrBuf.Bytes()
+		status = http.StatusBadRequest
+	}
+
+	strOutput := getOutput(currentOutput)
 
 	return Response{
-		Trimmed: len(strOutput) > 200,
-		Output: strOutput,
+		Status: status,
+		Trimmed: len(currentOutput) > maxOutputByteSliceLength,
+		Output: strOutput[:len(strOutput) - 1],
 	}
+}
+
+func getOutput(byteOutPut []byte) []string{
+	byteReader := bytes.NewReader(byteOutPut)
+	limitReader := io.LimitReader(byteReader, maxOutputByteSliceLength)
+	dest := make([]byte, maxOutputByteSliceLength)
+
+	limitReader.Read(dest)
+	return strings.Split(string(dest[:len(dest) - 1]), "\n")
 }
 
 func cleanUpProcesses(currentUser string) error {

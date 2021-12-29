@@ -1,0 +1,1 @@
+timeout -s KILL 3 /bin/bash $1

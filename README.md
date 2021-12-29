@@ -2,9 +2,17 @@
 
 ### About
 Borealys is a small and simple remote code execution engine, the idea
-behind this project is quite simple, the user sends their code in one
-of the available languages, and the api will run the given
-code and return the output back to the user
+behind this project is quite simple, I have been curious of websites like
+leetcode and language specific playgrounds running code that has been 
+written in a web browser, so I decided to try my luck and create my own.
+
+This project runs in a `ubuntu:20.04` docker container based image with
+the following changes:
+- An extra group called runners
+- A root level folder called binaries containing all the binaries for each
+  supported language
+  
+- 100 unpriveleged users whose will the code through the `runuser` command
 
 ### Goals
 I decided to build this project in GoLang as I really wanted to learn it
@@ -22,10 +30,19 @@ following challenges:
 
 ### Behaviour
 - Users will send their code along with the selected language name and version,
-  if available, user's code will be run against the selected language, either if the
-  code succeeds or fails, the output of this process will be sent in the
-  http response along a status code representing the final state of
-  the operation.
+  if available, user's code will be run against the selected language, if
+  the code succeeds the stdout of the executed code will be sent in the response,
+  if your code can not be executed lets say by a missing `;` you will get
+  the stderr back
+
+### Supported languages
+Hopefully in their newest versions!
+- Bash
+- Go
+- Java
+- Kotlin
+- Node (javascript)
+- Python
 
 ### Api endpoints
 - GET /api/languages => returns an array of all the available languages,
@@ -34,11 +51,30 @@ following challenges:
 [
   {
     "language": "java",
+    "timeout": 4,
     "versions": ["17", "11", "8"]
   },
   {
     "language": "python",
+    "timeout": 3,
     "versions": ["3.10.1"]
   }
 ]
+```
+
+- POST /api/run => Given a valid piece of code will give you back the stdout,
+if the code can not be executed, you will receive the stderr instead
+
+```json
+{
+  "language": "Node",
+  "version": "16.3.1",
+  "code": [
+    "const words = ['hola', 'hi']",
+    "\n",
+    "for(let word of words){",
+    "   console.log(`current word is ${word}`)",
+    "}"
+  ]
+}
 ```
