@@ -1,8 +1,10 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	pkg2 "github.com/glazzes/borealys/pkg"
+	"time"
 )
 
 var (
@@ -16,11 +18,16 @@ func init(){
 	initializerService.CreateExecutorUsers()
 	initializerService.SetUpBinaries()
 	languageService.SaveAll()
-	languageService.SaveRunnableLanguages()
 }
 
 func main() {
 	router := gin.Default()
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"http://localhost:19006"},
+		AllowMethods: []string{"POST", "GET", "OPTIONS"},
+		MaxAge: 12 * time.Hour,
+	}))
 
 	router.GET("/api/languages", languageService.GetAll)
 	router.POST("/api/run", codeRunnerService.RunCode)

@@ -30,7 +30,6 @@ type SimpleCodeRunnerService struct {}
 
 type ExecutableCode struct {
 	Language string `json:"language" binding:"required"`
-	Version string `json:"version" binding:"required"`
 	Code []string `json:"code" binding:"required"`
 }
 
@@ -48,7 +47,7 @@ func (c *SimpleCodeRunnerService) RunCode(context *gin.Context) {
 		return
 	}
 
-	language := languageService.GetRunnableLanguageByKey(body.Language + "-" + body.Version)
+	language := languageService.GetLanguageByName(body.Language)
 	currentUser := fmt.Sprintf("user%d", user)
 	tempFolderName := uuid.New().String()
 
@@ -68,7 +67,7 @@ func (c *SimpleCodeRunnerService) RunCode(context *gin.Context) {
 }
 
 func executeFile(currentUser, file string, lang SupportedLanguage) Response {
-	script := fmt.Sprintf("/borealys/languages/%s/%s/run.sh", strings.ToLower(lang.Name), lang.Version)
+	script := fmt.Sprintf("/borealys/languages/%s/run.sh", strings.ToLower(lang.Name))
 
 	cmd := exec.Command(
 		"runuser",

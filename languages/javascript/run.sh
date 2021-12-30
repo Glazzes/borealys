@@ -1,0 +1,1 @@
+timeout -s KILL 3 /binaries/javascript/bin/node $1
