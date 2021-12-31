@@ -5,19 +5,18 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"io"
+	"log"
 	"net/http"
 	"os/exec"
 	"strings"
 )
 
 const (
-	maxOutputByteSliceLength = 65332 // Max output size 64kb
+	maxOutputBufferCapacity = "65332" // Max output size 64kb
 )
 
 var (
 	user = 1
-	cacheService = &SimpleCacheService{}
 	languageService = &SimpleLanguageService{}
 	fileService = &SimpleFileService{}
 )
@@ -35,7 +34,6 @@ type ExecutableCode struct {
 
 type Response struct {
 	Status int
-	Trimmed bool
 	Output []string
 }
 
@@ -59,58 +57,42 @@ func (c *SimpleCodeRunnerService) RunCode(context *gin.Context) {
 	context.JSON(http.StatusOK, output)
 	fileService.DeleteTemporaryFolder(currentUser, tempFolderName)
 
-	/*
-	if err = cleanUpProcesses(currentUser); err != nil {
+	if err := cleanUpProcesses(currentUser); err != nil {
 		log.Fatalln("could not kill user processes")
 	}
-	 */
 }
 
 func executeFile(currentUser, file string, lang SupportedLanguage) Response {
 	script := fmt.Sprintf("/borealys/languages/%s/run.sh", strings.ToLower(lang.Name))
+	run := exec.Command("runuser", "-u", currentUser, "--", "/bin/bash", script, file)
+	head := exec.Command("head", "--bytes", maxOutputBufferCapacity)
 
-	cmd := exec.Command(
-		"runuser",
-		"-u",
-		currentUser,
-		"--",
-		"/bin/bash",
-		script,
-		file)
+	errBuf := bytes.Buffer{}
+	run.Stderr = &errBuf
 
-	stdoutBuf := bytes.Buffer{}
-	stderrBuf := bytes.Buffer{}
+	head.Stdin, _ = run.StdoutPipe()
+	headOutput := bytes.Buffer{}
+	head.Stdout = &headOutput
 
-	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
+	_ = run.Start()
+	_ = head.Start()
+	_ = run.Wait()
+	_ = head.Wait()
 
-	cmd.Run()
-	var currentOutput []byte
+	var result string
 	var status int
-	if len(stdoutBuf.Bytes()) > 0 {
-		currentOutput = stdoutBuf.Bytes()
+	if headOutput.Len() > 0 {
+		result = headOutput.String()
 		status = http.StatusOK
 	}else{
-		currentOutput = stderrBuf.Bytes()
-		status = http.StatusBadRequest
+		result = errBuf.String()
+		status = http.StatusInternalServerError
 	}
-
-	strOutput := getOutput(currentOutput)
 
 	return Response{
 		Status: status,
-		Trimmed: len(currentOutput) > maxOutputByteSliceLength,
-		Output: strOutput[:len(strOutput) - 1],
+		Output: strings.Split(result, "\n"),
 	}
-}
-
-func getOutput(byteOutPut []byte) []string{
-	byteReader := bytes.NewReader(byteOutPut)
-	limitReader := io.LimitReader(byteReader, maxOutputByteSliceLength)
-	dest := make([]byte, maxOutputByteSliceLength)
-
-	limitReader.Read(dest)
-	return strings.Split(string(dest[:len(dest) - 1]), "\n")
 }
 
 func cleanUpProcesses(currentUser string) error {
