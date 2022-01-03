@@ -1,1 +1,1 @@
-timeout -s KILL 3 /binaries/javascript/bin/node $1
+runuser -u "$1" -- timeout -s KILL 3 /binaries/javascript/bin/node "$2"

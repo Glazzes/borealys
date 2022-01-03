@@ -1,1 +1,1 @@
-timeout -s KILL 3 /bin/bash $1
+runuser -u "$1" -- timeout -s KILL 3 /bin/bash "$2"

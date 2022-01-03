@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"log"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -55,16 +56,26 @@ func (c *SimpleCodeRunnerService) RunCode(context *gin.Context) {
 	output := executeFile(currentUser, filename, language)
 
 	context.JSON(http.StatusOK, output)
-	fileService.DeleteTemporaryFolder(currentUser, tempFolderName)
 
-	if err := cleanUpProcesses(currentUser); err != nil {
-		log.Fatalln("could not kill user processes")
+	// clean up
+	fileService.DeleteTemporaryFolder(currentUser, tempFolderName)
+	_ = cleanUpProcesses(currentUser)
+
+	// running rm -rf --no-preserve-root deletes user folder, so i needs to be restored
+	restoreUserFolderIfDeleted(currentUser)
+
+	// assign next user to run code
+	if user >= 3{
+		user = 1
+	}else{
+		user++
 	}
 }
 
 func executeFile(currentUser, file string, lang SupportedLanguage) Response {
 	script := fmt.Sprintf("/borealys/languages/%s/run.sh", strings.ToLower(lang.Name))
-	run := exec.Command("runuser", "-u", currentUser, "--", "/bin/bash", script, file)
+
+	run := exec.Command("/bin/bash", script, currentUser, file)
 	head := exec.Command("head", "--bytes", maxOutputBufferCapacity)
 
 	errBuf := bytes.Buffer{}
@@ -81,7 +92,11 @@ func executeFile(currentUser, file string, lang SupportedLanguage) Response {
 
 	var result string
 	var status int
+
 	if headOutput.Len() > 0 {
+		result = headOutput.String()
+		status = http.StatusOK
+	}else if headOutput.Len() == 0 && errBuf.Len() == 0 {
 		result = headOutput.String()
 		status = http.StatusOK
 	}else{
@@ -96,5 +111,14 @@ func executeFile(currentUser, file string, lang SupportedLanguage) Response {
 }
 
 func cleanUpProcesses(currentUser string) error {
-	return exec.Command("pkill", "-u", currentUser).Run()
+	return exec.Command("pkill", "-9", "-u", currentUser).Run()
+}
+
+func restoreUserFolderIfDeleted(currentUser string){
+	userFolder := "/tmp/" + currentUser
+	if _, err := ioutil.ReadDir(userFolder); err != nil{
+		if os.IsNotExist(err){
+			_ = exec.Command("runuser", "-u", currentUser, "--", "mkdir", userFolder).Run()
+		}
+	}
 }

@@ -1,6 +1,7 @@
 version: "3.7"
 
 services:
+
   borealys:
     build: "."
     container_name: borealys
@@ -8,6 +9,8 @@ services:
     - 5000:5000
     depends_on:
       - cache
+    cap_add:
+      - LINUX_IMMUTABLE
 
   cache:
     image: redis:6.2.4-alpine

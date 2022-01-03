@@ -1,1 +1,1 @@
-timeout -s KILL 4 /binaries/java/bin/java $1
+runuser -u "$1" -- timeout -s KILL 4 /binaries/java/bin/java "$2"

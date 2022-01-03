@@ -12,9 +12,10 @@ import (
 )
 
 type InitializerService interface {
+	CreateRunnersGroup()
 	CreateExecutorUsers()
 	SetUpBinaries()
-	CreateRunnersGroup()
+	HardenScripts()
 }
 
 type SimpleInitializerService struct {}
@@ -34,7 +35,7 @@ func init()  {
 
 func (context *SimpleInitializerService) CreateRunnersGroup() {
 	infoLogger.Println("Creating runners group...")
-	if err := exec.Command("/bin/bash", "/borealys/languages/scripts/create-group.sh").Run(); err != nil {
+	if err := exec.Command("/bin/bash", "/borealys/scripts/create-group.sh").Run(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -43,7 +44,7 @@ func (context *SimpleInitializerService) CreateRunnersGroup() {
 
 func (context *SimpleInitializerService) CreateExecutorUsers(){
 	infoLogger.Println("Creating executor users...")
-	if err := exec.Command("/bin/bash", "/borealys/languages/scripts/create-users.sh").Run(); err != nil {
+	if err := exec.Command("/bin/bash", "/borealys/scripts/create-users.sh").Run(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -90,6 +91,15 @@ func DownloadBinary(path, binary string){
 
 	message := fmt.Sprintf("%s binaries downloaded successfully!!", binary)
 	infoLogger.Println(strings.Title(message))
+}
+
+func (context *SimpleInitializerService) HardenScripts(){
+	infoLogger.Println("Hardening scripts and binaries...")
+	if err := exec.Command("/bin/bash", "/borealys/scripts/harden-scripts.sh").Run(); err != nil {
+		log.Fatal(err)
+	}
+
+	infoLogger.Println("Hardened scripts and binaries successfully!!!")
 }
 
 func checkNilErrorFatal(err error){

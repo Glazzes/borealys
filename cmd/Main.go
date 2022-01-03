@@ -17,6 +17,7 @@ func init(){
 	initializerService.CreateRunnersGroup()
 	initializerService.CreateExecutorUsers()
 	initializerService.SetUpBinaries()
+	initializerService.HardenScripts()
 	languageService.SaveAll()
 }
 
@@ -24,8 +25,10 @@ func main() {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:19006"},
+		AllowOrigins: []string{"*"},
 		AllowMethods: []string{"POST", "GET", "OPTIONS"},
+		AllowHeaders: []string{"Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With"},
+		AllowCredentials: true,
 		MaxAge: 12 * time.Hour,
 	}))
 

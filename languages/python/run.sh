@@ -1,1 +1,1 @@
-timeout -s KILL 3 python3 $1
+runuser -u "$1" -- timeout -s KILL 3 python3 "$2"
