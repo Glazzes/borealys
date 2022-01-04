@@ -34,7 +34,6 @@ type ExecutableCode struct {
 }
 
 type Response struct {
-	Status int
 	Output []string
 }
 
@@ -91,21 +90,16 @@ func executeFile(currentUser, file string, lang SupportedLanguage) Response {
 	_ = head.Wait()
 
 	var result string
-	var status int
 
 	if headOutput.Len() > 0 {
 		result = headOutput.String()
-		status = http.StatusOK
 	}else if headOutput.Len() == 0 && errBuf.Len() == 0 {
 		result = headOutput.String()
-		status = http.StatusOK
 	}else{
 		result = errBuf.String()
-		status = http.StatusInternalServerError
 	}
 
 	return Response{
-		Status: status,
 		Output: strings.Split(result, "\n"),
 	}
 }

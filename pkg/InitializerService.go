@@ -36,7 +36,11 @@ func init()  {
 func (context *SimpleInitializerService) CreateRunnersGroup() {
 	infoLogger.Println("Creating runners group...")
 	if err := exec.Command("/bin/bash", "/borealys/scripts/create-group.sh").Run(); err != nil {
-		log.Fatal(err)
+		if strings.Contains(err.Error(), "already exists"){
+			infoLogger.Println("Runners group already exists")
+		}else{
+			log.Fatal(err)
+		}
 	}
 
 	infoLogger.Println("Created runners group successfully!!!")
@@ -53,8 +57,8 @@ func (context *SimpleInitializerService) CreateExecutorUsers(){
 
 func (context *SimpleInitializerService)SetUpBinaries(){
 	infoLogger.Print("Setting up binaries")
-	err := filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
-		if strings.HasSuffix(path, "/javascript/setup.sh"){
+	_ = filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
+		if strings.HasSuffix(path, "/python/setup.sh"){
 			info, err := GetBinaryInfoFromPath(path)
 			if err == nil {
 				infoLogger.Printf("Downloading %s binaries", info[binaryName])
@@ -65,7 +69,7 @@ func (context *SimpleInitializerService)SetUpBinaries(){
 		return nil
 	})
 
-	checkNilErrorFatal(err)
+	//checkNilErrorFatal(err)
 	infoLogger.Println("Binaries and environment have been downloaded and exported successfully")
 }
 
