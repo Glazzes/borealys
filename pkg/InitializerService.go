@@ -58,7 +58,7 @@ func (context *SimpleInitializerService) CreateExecutorUsers(){
 func (context *SimpleInitializerService)SetUpBinaries(){
 	infoLogger.Print("Setting up binaries")
 	_ = filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
-		if strings.HasSuffix(path, "/python/setup.sh"){
+		if strings.HasSuffix(path, "setup.sh"){
 			info, err := GetBinaryInfoFromPath(path)
 			if err == nil {
 				infoLogger.Printf("Downloading %s binaries", info[binaryName])
