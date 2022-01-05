@@ -40,8 +40,8 @@ Hopefully in their newest versions!
 - Bash
 - Go
 - Java
-- Kotlin
-- Node (javascript)
+- Javascript 
+- Kotlin (work in progress)
 - Python
 
 ### Api endpoints
@@ -52,12 +52,12 @@ Hopefully in their newest versions!
   {
     "language": "java",
     "timeout": 4,
-    "versions": ["17", "11", "8"]
+    "version": "17"
   },
   {
     "language": "python",
     "timeout": 3,
-    "versions": ["3.10.1"]
+    "version": "3.10.1"
   }
 ]
 ```
@@ -67,8 +67,7 @@ if the code can not be executed, you will receive the stderr instead
 
 ```json
 {
-  "language": "Node",
-  "version": "16.3.1",
+  "language": "Javascript",
   "code": [
     "const words = ['hola', 'hi']",
     "\n",

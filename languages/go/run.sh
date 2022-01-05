@@ -1,1 +1,0 @@
-runuser -u "$1" -- timeout -s KILL 4 /binaries/go/bin/go run "$2"

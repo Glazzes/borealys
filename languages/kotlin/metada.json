@@ -1,0 +1,6 @@
+{
+  "name": "Kotlin",
+  "version": "1.6.10",
+  "extension": ".kt",
+  "timeout": 4
+}

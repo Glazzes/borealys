@@ -2,5 +2,5 @@
   "name": "Golang",
   "version": "1.17.5",
   "extension": ".go",
-  "timeout": 4
+  "timeout": 10
 }
